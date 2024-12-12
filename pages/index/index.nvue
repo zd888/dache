@@ -1,0 +1,1778 @@
+<template>
+	<view class="index">
+		<!-- 中间地图 -->
+		<view class="maps">
+			<map id="map" class="maps" :latitude="latitude" :longitude="longitude" :markers="covers"
+				:show-location="true" :polyline="polyline">
+			</map>
+		</view>
+		<!-- 底部操作 -->
+		<view class="bottomcont" v-if="popupshow"
+			:style="haveorder.length!=0&&!driverShow?'height: 600rpx;':'height: 500rpx;'">
+			<view class="orderb margin-top" v-if="haveorder.length!=0&&!driverShow" @click="goOrerDer()">
+				<view><text style="font-size: 28rpx;font-weight: 500;">您当前有一个正在进行的订单</text></view>
+				<view class="flex align-center flex-row">
+					<view class="text-sm"><text style="font-size: 24rpx;">立即查看</text></view>
+					<image src="../../static/image/go.png" style="width: 14rpx;height: 24rpx;margin-left: 5rpx;">
+					</image>
+				</view>
+			</view>
+			<view class="addbox " :class="tabIndex==0?'bg':''" @click="changeAdd(1)">
+				<view class="add_cont">
+					<view class="green"></view>
+					<view class="" v-if="addlist.length==0">
+						<text style="font-size: 32rpx;">正在获取上车点...</text>
+					</view>
+					<view class="add_tit" v-else>
+						<view class="flex align-center flex-row">
+							<text style="font-size: 30rpx;">从</text>
+							<text
+								style="color: #03A859;max-width: 380rpx;white-space: nowrap;overflow: hidden;font-size: 30rpx;text-overflow: ellipsis;lines:1;">
+								{{addlist.address}}
+							</text>
+							<text style="font-size: 30rpx;">出发</text>
+							<!-- 从<text style="color: #03A859;">{{addlist.address}}</text>出发 -->
+						</view>
+						<view style="margin-top: 5rpx;" v-if="riderNumber">
+							<text style="font-size: 26rpx;color: #999999;font-weight: 500;">附近有{{riderNumber}}个司机</text>
+
+						</view>
+					</view>
+				</view>
+				<view>
+					<image src="../../static/image/go.png" style="width: 16rpx;height: 25rpx;">
+					</image>
+				</view>
+			</view>
+
+			<view class="addbox " :class="tabIndex==1?'bg':''" @click="changeAdd(2)">
+				<view class="add_cont">
+					<view class="orgin"></view>
+					<view class="add_tit" v-if="addlists.length==0">
+						<text style="font-size:30rpx;">您要去哪儿</text>
+					</view>
+					<view class="add_tit" v-else>
+						<text style="font-size:30rpx;">{{addlists.address}}</text>
+					</view>
+				</view>
+				<view>
+					<image src="../../static/image/go.png" style="width: 16rpx;height: 25rpx;">
+					</image>
+				</view>
+			</view>
+
+			<view class="margin-lr flex align-center flex-row justify-between flex-wrap padding-bottom">
+				<view v-for="(item,index) in bannerList" :key="index"
+					:style="bannerList.length>=3?'margin-bottom:20rpx;':''">
+					<image :src="item.imageUrl" style="width: 331rpx;border-radius: 8upx;height: 133upx;"
+						@click="goWeb(item.url)" mode="scaleToFill"></image>
+				</view>
+			</view>
+			<!-- <view class="banre">
+				<image src="../../static/image/banner.png" style="width: 331rpx;border-radius: 8upx;height: 133upx;"
+					@click="goWeb(item.url)" mode="scaleToFill"></image>
+				<image src="../../static/image/banner1.png" style="width: 331rpx;border-radius: 8upx;height: 133upx;"
+					@click="goWeb(item.url)" mode="scaleToFill"></image>
+			</view> -->
+		</view>
+
+		<view class="bottomconts" v-if="ordershow"
+			:style="haveorder.length!=0&&!driverShow?'height: 660rpx;':'height: 560rpx;;'">
+			<view class="orderb margin-top" v-if="haveorder.length!=0&&!driverShow" @click="goOrerDer()">
+				<view>
+					<text style="font-size: 28rpx;font-weight: 500;">您当前有一个正在进行的订单</text>
+				</view>
+				<view class="flex align-center flex-row">
+					<view class="">
+						<text style="font-size: 24rpx;">立即查看</text>
+					</view>
+					<image src="../../static/image/go.png" style="width: 14rpx;height: 24rpx;margin-left: 5rpx;">
+					</image>
+				</view>
+			</view>
+			<view class="controls-box">
+				<view class="  flex align-center justify-center flex-row">
+					<text style="font-size: 30rpx;font-weight: bold;">您好，预估里程时长{{basicPrice.duration}}分钟</text>
+				</view>
+				<view class="text-center  margin-top flex align-center justify-center flex-row">
+
+					<text style="font-size:30rpx;">预估</text>
+					<text class="text-bold" style="font-size: 42rpx;">{{basicPrice.allMoney}}</text>
+					<text style="font-size:30rpx;">元</text>
+
+				</view>
+
+				<view class="flex align-center justify-center flex-row">
+					<view class="flex align-center justify-between flex-row" style="width: 500rpx;">
+						<view class="flex align-center justify-center flex-row margin-top" @click="openmingxi">
+							<view>
+								<text style="font-size:24rpx;color: #999999;">查看明细</text>
+							</view>
+							<image src="../../static/image/go.png"
+								style="width: 10rpx;height: 15rpx;margin-left: 8rpx;">
+							</image>
+						</view>
+						<view class="flex align-center justify-center flex-row margin-top" @click="openRemk">
+							<view style="">
+								<text style="font-size: 24rpx;color: #999999;">备注</text>
+							</view>
+							<image src="../../static/image/go.png"
+								style="width: 14rpx;height: 21rpx;margin-left: 8rpx;">
+							</image>
+						</view>
+					</view>
+				</view>
+			</view>
+
+			<view class="flex align-center justify-center flex-row margin-lr flex-row margin-top-xs"
+				@click="openYouhui">
+				<text style="font-size: 26rpx;">{{-couponName?-couponName:'使用优惠劵'}}</text>
+				<image src="../../static/image/right.png" style="width: 14rpx;height: 24rpx;margin-left: 5rpx;">
+				</image>
+			</view>
+
+			<view class="flex align-center justify-center flex-row padding-top">
+				<view class="flex align-center flex-row " style="font-size: 26upx;">
+					<image v-if="showAgree" @tap="isShowAgree"
+						src="https://api.shengqianxiong.com.cn/img/20201112/669aa8946cfb4ebdb459d57193c0ebca.png"
+						style="width: 32upx;height: 32upx;"></image>
+					<image v-else @tap="isShowAgree"
+						src="https://api.shengqianxiong.com.cn/img/20201112/1e9102fc891f4d86a13c7b2ba6921cba.png"
+						style="width: 32upx;height: 32upx;"></image>
+					<view class="margin-left-xs flex align-center flex-row">
+						<text style="font-size: 26rpx;">我已阅读并同意</text><text style="color: #346EF6;font-size: 26rpx;"
+							@click="goWeb('/my/setting/sijixieyi')">《打车服务协议》</text>
+					</view>
+				</view>
+			</view>
+			<view class="btn" @click="payorder()"><text style="color: #FFFFFF;">立即呼叫</text></view>
+		</view>
+
+		<view class="bottomcontbs" style="background: #FFFFFF;" v-if="driverShow">
+			<view class=" flex align-start flex-row justify-between" style="padding: 40rpx 30rpx 40rpx;">
+				<view>
+					<view>
+						<text class="text-bold" style="font-size: 40rpx;">正在为您全力寻找司机</text>
+					</view>
+					<view class="text-lg flex align-center flex-row margin-top-xs">
+						已等待
+						<smh-timer ref="timer" @timing="timing" :auto="true"></smh-timer>
+					</view>
+				</view>
+				<view class="qxdj" @click="openqx()">取消打车</view>
+			</view>
+		</view>
+		<!-- 顶部导航栏 -->
+		<view class="header">
+			<view class="header-content bb" v-if="isDw&&!ordershow&&!driverShow">
+				<image class="header-avatar" @click="goWeb('/pages/my/my')"
+					:src="image_url?image_url:'../../static/image/logo.png'"
+					style="width:60rpx ;height: 60rpx;margin-left: 10px;"></image>
+				<view class="header-title" @click="openMap()">
+					<text style="font-size: 28rpx;">{{city?city:'请选择城市'}}</text>
+					<image src="../../static/image/right.png" style="width: 14rpx;height: 22rpx;margin-left: 8rpx;">
+					</image>
+				</view>
+			</view>
+			<view v-else class="header-content" @click="openFest()">
+				<image src="../../static/image/icon_back.png" style="width:30px;height: 30px;margin-left: 38rpx;">
+				</image>
+			</view>
+		</view>
+		
+		<!-- 明细弹框 -->
+		<uni-popup ref="moneyShow" type="center" background-color="#fff">
+			<view class="mingxi">
+				<view style="position: relative;">
+					<view class="text-lg text-bold  flex align-center justify-center flex-row padding-top ">价格明细</view>
+					<view style="position: absolute;right: 10px;top: 10px;" @click="guanbimx(1)">
+						<image
+							src="https://dache.xianmxkj.com/file/uploadPath/2023/08/23/b44ee3b7206167a8838a46b62aa8a621.png"
+							style="width: 30px;height: 30px;"></image>
+					</view>
+				</view>
+				<view class="margin-top">
+					<view class="margin-bottom-xs" style="padding-left: 70rpx;">
+						<text style="font-size: 28rpx;">总费用：￥{{basicPrice.allMoney}}</text>
+					</view>
+					<view style="width: 100%;height: 1rpx;background: #b5b7ba;margin:20rpx 0;"></view>
+					<view class="margin-bottom-xs" style="padding-left: 70rpx;">
+						<text style="font-size: 28rpx;">总公里数：{{basicPrice.distance}}km</text>
+					</view>
+					<view style="width: 100%;height: 1rpx;background: #b5b7ba;margin:20rpx 0;"></view>
+					<view class="margin-bottom-xs" style="padding-left: 70rpx;">
+						<text style="font-size: 28rpx;">基础公里数：{{basicPrice.kilometer}}km</text>
+					</view>
+					<view style="width: 100%;height: 1rpx;background: #b5b7ba;margin:20rpx 0;"></view>
+					<view class="margin-bottom-xs" style="padding-left: 70rpx;">
+						<text style="font-size: 28rpx;">基础起步价：￥{{basicPrice.initMoney}}</text>
+					</view>
+					<view style="width: 100%;height: 1rpx;background: #b5b7ba;margin:20rpx 0;"></view>
+					<view class="margin-bottom-xs" style="padding-left: 70rpx;">
+						<text style="font-size: 28rpx;">超出部分公里数：{{basicPrice.metre}}km</text>
+					</view>
+					<view style="width: 100%;height: 1rpx;background: #b5b7ba;margin:20rpx 0;"></view>
+					<view class="margin-bottom-xs" style="padding-left: 70rpx;">
+						<text style="font-size: 28rpx;">超出部分每公里价格：￥{{basicPrice.unitOverMoney}}</text>
+					</view>
+					<view style="width: 100%;height: 1rpx;background: #b5b7ba;margin:20rpx 0;"></view>
+					<view class="margin-bottom-xs" style="padding-left: 70rpx;">
+						<text style="font-size: 28rpx;">超出部分收费总金额：￥{{basicPrice.otherMoney}}</text>
+					</view>
+					<view style="width: 100%;height: 1rpx;background: #b5b7ba;margin:20rpx 0;"></view>
+					<view class="margin-bottom-xs" style="padding-left: 70rpx;" v-if="basicPrice.isNight==1">
+						<text style="font-size: 28rpx;">当前是夜间时段</text>
+					</view>
+					<view style="width: 100%;height: 1rpx;background: #b5b7ba;margin:20rpx 0;"
+						v-if="basicPrice.isNight==1"></view>
+					<view class="margin-bottom-xs" style="padding-left: 70rpx;" v-if="basicPrice.isBeforeDawn==1">
+
+						<text style="font-size: 28rpx;">当前是凌晨时段</text>
+					</view>
+					<view style="width: 100%;height: 1rpx;background: #b5b7ba;margin: 20rpx 0;"
+						v-if="basicPrice.isBeforeDawn==1"></view>
+					<view class="margin-bottom-xs" style="padding-left: 70rpx;">
+						<text style="font-size: 28rpx;">预估总时长费：￥{{basicPrice.durationAllMoney}}</text>
+					</view>
+					<view style="width: 100%;height: 1rpx;background: #b5b7ba;margin:20rpx 0;"></view>
+					<view style="padding-left: 70rpx;">
+						<text style="font-size: 28rpx;">每分钟时长费：￥{{basicPrice.durationMoney}}</text>
+					</view>
+				</view>
+			</view>
+		</uni-popup>
+
+		<!-- 备注弹框 -->
+		<uni-popup ref="remkShow" type="bottom" background-color="#fff">
+			<view style="padding: 30rpx 30rpx 50rpx 30rpx;">
+				<view style="position: relative;">
+					<view class="text-lg text-bold text-center">
+						<text style="font-size: 32rpx;">备注</text>
+					</view>
+					<view style="position: absolute;right: 10px;top: -3px;" @click="guanbimx(2)">
+						<image
+							src="https://dache.xianmxkj.com/file/uploadPath/2023/08/23/b44ee3b7206167a8838a46b62aa8a621.png"
+							style="width: 28px;height: 28px;"></image>
+					</view>
+				</view>
+				<view class="margin-top" style="background: #F5F8FC;padding: 20rpx 25rpx;border-radius: 24rpx;">
+					<textarea :value="remarks" height="240px" placeholder="请输入备注(备注车型或者要求驾照,100字以内)" maxlength="100" placeholder-style="font-size:28rpx;" style="font-size: 28rpx;"/>
+				</view>
+				<view class="remkbtn" @click="guanbimx(2)">
+					<text style="font-size: 32rpx;color: #FFFFFF;">确定</text>
+				</view>
+			</view>
+		</uni-popup>
+
+		<!-- 优惠劵弹框 -->
+		<uni-popup ref="youhuiShow" type="bottom" background-color="#fff">
+			<view style="padding: 30rpx 30rpx 50rpx 30rpx;background: #F5F8FC;">
+				<view class="text-lg text-bold text-center">
+					<text style="font-size: 32rpx;">优惠劵</text>
+				</view>
+				<view class="flex align-center justify-end flex-row">
+					<view class="deteJuan" @click="deteYouhuj">
+						<text style="color: red;font-size: 28rpx;">不使用优惠劵</text>
+					</view>
+				</view>
+				<scroll-view :scroll-top="scrollTop" scroll-y="true" class="scroll-Y" @scrolltoupper="upper"
+					@scrolltolower="lower" @scroll="scroll">
+					<view class="money_box" v-for="(item,index) in youhuiList" :key="index">
+						<view class="box_tit">
+							<view class="money_name">
+								<text style="font-size: 28rpx;">{{item.couponName}}</text>
+							</view>
+							<view class="money_price">
+								<text style="color: red;font-size: 32rpx;">
+									￥{{item.money}}
+								</text>
+							</view>
+						</view>
+						<view v-if="item.expirationTime" style="margin-top: 10rpx;">
+							<text style="font-size: 24rpx;color: #999999;">有效期至{{item.expirationTime}}</text>
+						</view>
+						<view style="margin-top: 10rpx;" v-else>
+							<text style="font-size: 24rpx;color: #999999;">永久有效</text>
+						</view>
+						<view class="money_line">
+							<!-- <u-line direction="row" color="#E6E6E6" border-style="dashed" /> -->
+						</view>
+						<view class="box_bottom">
+							<view class="money_use">
+								<text style="font-size: 26rpx;">满{{item.minMoney}}元可使用</text>
+							</view>
+							<view class="money_btn">
+								<view class="lj_use" @click="useryouhui(item)">
+									<text style="color: red;font-size: 26rpx;">立即使用</text>
+								</view>
+							</view>
+						</view>
+					</view>
+				</scroll-view>
+
+			</view>
+		</uni-popup>
+		<!-- 取消打车弹框 -->
+		<uni-popup ref="qxshow" type="center" background-color="#fff">
+			<view class="padding  flex flex-column align-center" style="width: 550rpx;border-radius: 24rpx;">
+				<image src="../../static/image/qxdj.png" style="width: 406rpx;height: 181rpx;"></image>
+				<view class="margin-top-sm" style="width: 400rpx;">
+					<text style="font-size: 34rpx;font-weight: bold;">
+						取消后重新呼叫可能会耽误您的出行时间，是否要取消？
+					</text>
+				</view>
+				<view class="flex justify-between flex-row margin-top-60">
+					<view class="btns" @click="guanbimx(3)">
+						<text
+							style="color: #999999;font-size: 28rpx;font-family: PingFang SC;font-weight: bold;">暂不取消</text>
+					</view>
+					<view class="btnss" @click="bindorderOff">
+						<text
+							style="color: #FFFFFF;font-size: 28rpx;font-family: PingFang SC;font-weight: bold;">确认取消</text>
+					</view>
+				</view>
+			</view>
+		</uni-popup>
+		
+		<!-- 待付款订单弹框 -->
+		<uni-popup ref="dfkshow" type="center" background-color="none">
+			<view class=" text-center">
+				<image src="https://dache.xianmxkj.com/file/uploadPath/2024/01/15/95e4106d5ce608a1ec642736bf3d3a4f.png"
+					class="hoveorderimg" mode="widthFix" @click="gofikkuan()" style="width: 500rpx;"></image>
+			</view>
+		</uni-popup>
+
+		<!-- 支付弹框 -->
+		<uni-popup ref="showpay" type="bottom" background-color="#fff">
+			<view class="popup_pay">
+				<view class=" margin-top padding-lr radius">
+					<view style="padding: 0 0upx;margin-top: 36rpx;">
+						<view class="flex-row flex align-center justify-center" style="height: 100upx;padding: 20upx 0;"
+							v-for="(item,index) in openLists" :key='index'>
+							<image :src="item.image" style="width: 55upx;height: 55upx;border-radius: 50upx;">
+							</image>
+							<view style="font-size: 30upx;margin-left: 20upx;width: 420rpx;">
+								{{item.name}}
+							</view>
+							<radio-group name="openWay" style="margin-left: 45rpx;" @tap='selectWay(item.id )'>
+								<label class="tui-radio">
+									<radio color="#3699FF" :checked="openWay == item.id ? true : false" />
+								</label>
+							</radio-group>
+						</view>
+					</view>
+				</view>
+				<view class="pay_btns" @click="pay()">
+					<text style="color: #ffffff;font-size: 28rpx;">确认支付</text>
+				</view>
+			</view>
+		</uni-popup>
+		<!-- <u-popup v-model="qxshow" mode="center" border-radius="14" width="580rpx" :closeable="true" bgColor="#FFFFFF">
+		
+		</u-popup> -->
+
+		<!-- <u-popup v-model="youhuiShow" mode="bottom" border-radius="14" height="650rpx" :closeable="true">
+			
+		</u-popup> -->
+	</view>
+</template>
+
+<script>
+	import httpsRequest from '../../common/httpRequest.js'
+	// 引入SDK核心类，地图组件
+	import QQMapWX from '@/components/qqmap-wx-jssdk1.2/qqmap-wx-jssdk.js'
+	export default {
+		onShareAppMessage(res) { //发送给朋友
+			return {
+				title: this.tuiguang,
+				path: '/pages/index/index?invitation=' + this.invitationCode,
+				imageUrl: this.tuiguangImg,
+			}
+		},
+		onShareTimeline(res) { //分享到朋友圈
+			return {
+				title: this.tuiguang,
+				path: '/pages/index/index?invitation=' + this.invitationCode,
+				imageUrl: this.tuiguangImg,
+			}
+		},
+		data() {
+			return {
+				image_url: "../../static/image/logo.png",
+				is_focus: false,
+				remarks: '', //需求备注
+				HBShow: false,
+				modelDet: {},
+
+				id: 0, // 使用 marker点击事件 需要填写id
+				title: 'map',
+				latitude: '',
+				longitude: '',
+				qqmapsdk: {}, // 腾讯地图小程序的SDK
+				covers: [], // 地图上面的标记点
+				to: { // 目的地坐标
+					latitude: '',
+					longitude: '',
+				},
+				polyline: [], //路线
+				polylines: '',
+				bannerList: [],
+				tabIndex: 1,
+				addlist: [], //出发地址
+				addressId: '',
+				addlists: [], //目的地
+				addressIds: "",
+				riderNumber: '',
+				// 用户红包
+				newUserFlag: 2,
+				token: '',
+				tuiguang: '',
+				tuiguangImg: '',
+				arr: [],
+
+				invitationCode: '',
+
+				city: '',
+				showAgree: false, //协议是否选择
+				payshow: false,
+				qxshow: false,
+
+				driverShow: false,
+				timer: '',
+				hoveorderShow: false, //正在进行订单
+				isFist: true, //首次进来获取正在进行订单
+				moneyShow: false, //价格明细弹框
+				basicPrice: [], //基础价格
+				popupshow: true, //首页底部
+				ordershow: false, //下单底部
+				isDw: true,
+				youhuiList: [], //优惠劵
+				couponName: '',
+				couponId: '',
+				scrollTop: 0,
+				old: {
+					scrollTop: 0
+				},
+				remkShow: false, //备注弹框
+				remarks: '',
+
+
+				youhuiShow: false, //优惠劵弹框
+				haveorder: [], //正在进行订单
+				indentId: '',
+				openWay: 1,
+				openLists: [],
+				dfkOrder:[],
+				dfkshow: false,
+			}
+		},
+		onLoad(e) {
+			let that = this
+			// #ifdef MP-WEIXIN
+			if (e.scene) {
+				const scene = decodeURIComponent(e.scene);
+				that.$queue.setData('inviterCode', scene.split(',')[0]);
+			}
+			// #endif
+
+			// 获取邀请码保存到本地
+			if (e.invitation) {
+				that.$queue.setData('inviterCode', e.invitation);
+			}
+
+			httpsRequest.getT('/app/common/type/128').then(res => {
+				if (res.code == 0 && res.data && res.data.value) {
+					that.key = res.data.value
+					// 实例化API核心类
+					that.qqmapsdk = new QQMapWX({
+						key: that.key // 自己申请的key值
+					})
+				}
+			});
+			uni.getLocation({
+				type: 'gcj02',
+				geocode: true, //设置该参数为true可直接获取经纬度及城市信息
+				success: function(res) {
+					console.log(res, '地理位置')
+					that.latitude = res.latitude
+					that.longitude = res.longitude
+					uni.setStorageSync('latitude', res.latitude)
+					uni.setStorageSync('longitude', res.longitude)
+					that.getAdd(that.longitude, that.latitude)
+					// #ifdef APP-PLUS
+					that.city = res.address.city
+					uni.setStorageSync('city', res.address.city)
+
+					that.selectCity(that.longitude, that.latitude);
+					// #endif
+
+					// #ifdef H5
+					that.selectCity(that.longitude, that.latitude);
+					// #endif
+
+					// #ifdef MP-WEIXIN
+					let add
+					uni.request({
+						url: 'https://apis.map.qq.com/ws/geocoder/v1/?location=' + that.latitude +
+							',' + that
+							.longitude + '&key=TMWBZ-MZJ3O-QR2WO-SDQZY-HRNWO-3ABYP',
+						success(re) {
+							if (re.statusCode === 200) {
+								if (re.data.status == 121) {
+									that.selectCity(that.longitude, that.latitude);
+								} else {
+									let citydata = re.data.result.address_component.city
+									console.log("获取城市名称成功", citydata)
+									that.city = citydata ? citydata : '未知'
+									uni.setStorageSync('city', citydata)
+									add = {
+										// address: res.data.province + res.data.city + res.data.district, //地址
+										address: re.data.result.address_reference.landmark_l2
+											.title,
+										lng: that.longitude, //地址经度
+										lat: that.latitude, //地址维度
+										addressId: '',
+										addressDefault: '',
+										province:re.data.result.address_component.province, //出发-省
+										city:re.data.result.address_component.city, //出发-市
+										county:re.data.result.address_component.district, //出发-区
+									}
+									that.addlist = add
+									that.covers = [{
+										id: 1,
+										latitude: that.latitude,
+										longitude: that.longitude,
+										iconPath: '../../static/image/qi.png',
+										width: 32,
+										height: 44,
+										callout: { //自定义标记点上方的气泡窗口 点击有效
+											content: re.data.result.address_reference
+												.landmark_l2
+												.title, //文本
+											color: '#333333', //文字颜色
+											fontSize: 12, //文本大小
+											padding: 10, //附近留白
+											borderRadius: 6, //边框圆角
+											bgColor: '#FFFFFF', //背景颜色
+											display: 'ALWAYS', //常显
+										},
+									}]
+								}
+							} else {
+								console.log("获取信息失败，请重试！")
+							}
+						}
+					});
+					// #endif
+				},
+				fail: function() {
+					console.log('获取地址失败')
+				}
+			})
+
+			// #ifdef MP-WEIXIN
+			that.openLists = [{
+				id: 1,
+				image: '../../static/image/icon_weixin.png',
+				name: '微信'
+			}, {
+				id: 3,
+				image: '../../static/image/jinbi.png',
+				name: '余额'
+			}]
+			that.openWay = 1
+			// #endif
+			// #ifdef H5
+			let ua = navigator.userAgent.toLowerCase();
+			if (ua.indexOf('micromessenger') !== -1) {
+				//公众号是否自动登录  419
+				that.$Request.get('/app/common/type/419').then(res => {
+					if (res.data && res.data.value && res.data.value == '是') {
+						that.openLists = [{
+							id: 2,
+							image: '../../static/image/zhifubao.png',
+							name: '支付宝'
+						}, {
+							id: 1,
+							image: '../../static/image/icon_weixin.png',
+							name: '微信'
+						}, {
+							id: 3,
+							image: '../../static/image/jinbi.png',
+							name: '余额'
+						}];
+						that.openWay = 3;
+					} else {
+						that.openLists = [{
+							id: 2,
+							image: '../../static/image/zhifubao.png',
+							name: '支付宝'
+						}, {
+							id: 3,
+							image: '../../static/image/jinbi.png',
+							name: '余额'
+						}];
+						that.openWay = 3;
+					}
+				})
+			} else {
+				that.openLists = [{
+					id: 2,
+					image: '../../static/image/zhifubao.png',
+					name: '支付宝'
+				}, {
+					id: 3,
+					image: '../../static/image/jinbi.png',
+					name: '余额'
+				}];
+				that.openWay = 3;
+			}
+			// #endif
+			// #ifdef APP-PLUS
+			that.openLists = [{
+					id: 1,
+					image: '../../static/image/icon_weixin.png',
+					name: '微信'
+				},
+				{
+					id: 2,
+					image: '../../static/image/zhifubao.png',
+					name: '支付宝'
+				}, {
+					id: 3,
+					image: '../../static/image/jinbi.png',
+					name: '余额'
+				}
+			]
+			that.openWay = 1
+			// #endif
+		},
+		onShow() {
+			this.getBannerList()
+			this.getZiZhi() //获取分享文案  图片
+			this.token = uni.getStorageSync('token')
+			if (this.token) {
+				this.gethaveOrder() //获取正在进行订单k
+				this.orderList() //获取待付款订单
+				this.timer = setInterval(() => {
+					this.gethaveOrder() //获取正在进行订单k
+				}, 100000);
+
+				this.getUserInfo()
+				if (this.isFist) {
+					this.isFist = false
+					this.gethaveOrders()
+				}
+				if (uni.getStorageSync('addressId')) {
+					this.addressId = uni.getStorageSync('addressId')
+					this.getcfd()
+				}
+				if (uni.getStorageSync('addressIds')) {
+					this.addressIds = uni.getStorageSync('addressIds')
+					this.getzd()
+				}
+
+
+
+
+
+
+				httpsRequest.getT('/app/common/type/307').then(res => { //用户端订单状态通知 307
+					if (res.code == 0) {
+						if (res.data && res.data.value) {
+							this.arr.push(res.data.value)
+						}
+					}
+				})
+			} else {
+				clearInterval(this.timer)
+			}
+		},
+		methods: {
+			gofikkuan() {
+				uni.setStorageSync('current', 1)
+				// this.dfkshow = false
+				this.$refs.dfkshow.close()
+				uni.navigateTo({
+					url: '/pages/order/order'
+				})
+			},
+			// 订单获取
+			orderList() {
+				httpsRequest.getT('/app/indent/findUserIndent?page=1&limit=5&indentState=0').then(res => {
+					if (res.code === 0) {
+						this.dfkOrder = res.data.records
+						if (this.dfkOrder.length != 0) {
+							// this.dfkshow = true
+							this.$refs.dfkshow.open()
+						}
+					}
+				});
+			},
+			// 获取轮播图
+			getBannerList() {
+				httpsRequest.getT("/app/banner/selectBannerList?classify=1&state=1").then(res => {
+					if (res.code == 0) {
+						this.bannerList = res.data
+					}
+				});
+			},
+			//取消打车弹框
+			openqx() {
+				this.$refs.qxshow.open('center')
+			},
+			// 跳转正在进行订单详情
+			goOrerDer() {
+				uni.navigateTo({
+					url: '/my/order/pay?indentNumber=' + this.haveorder.indentNumber
+				})
+				this.hoveorderShow = false
+			},
+			isShowAgree() {
+				//是否选择协议
+				this.showAgree = !this.showAgree;
+			},
+			guanbimx(index) {
+				if (index == 1) {
+					this.$refs.moneyShow.close()
+				} else if (index == 2) {
+					this.$refs.remkShow.close()
+				} else if (index == 3) {
+					this.$refs.qxshow.close()
+				}
+			},
+			//清空优惠劵
+			deteYouhuj() {
+				this.couponId = ''
+				this.couponName = ''
+				// this.youhuiShow = false
+				this.$refs.youhuiShow.close()
+			},
+			//使用优惠劵
+			useryouhui(item) {
+				this.couponId = item.id
+				this.couponName = item.money
+				// this.youhuiShow = false
+				this.$refs.youhuiShow.close()
+			},
+			openYouhui() {
+				if (this.youhuiList.length == 0) {
+					uni.showToast({
+						title: '当前暂无可使用的优惠劵',
+						icon: 'none'
+					})
+					return
+				}
+
+				this.$refs.youhuiShow.open('bottom')
+				// this.youhuiShow = true
+			},
+			openRemk() {
+				this.$refs.remkShow.open('bottom')
+				// this.remkShow = true
+			},
+			openmingxi() { //查看价格明细
+				// this.moneyShow = true
+				this.$refs.moneyShow.open('center')
+			},
+			openFest() { //返回首页下单
+
+				this.addlists = []
+				this.covers = []
+				this.polyline = []
+				this.ordershow = false
+				this.popupshow = true
+				this.driverShow = false
+				this.selectCity(this.longitude, this.latitude);
+				this.gethaveOrder()
+				this.orderList() //获取待付款订单
+			},
+			// 获取用户信息
+			getUserInfo() {
+				httpsRequest.getT('/app/userinfo/findUserInfoById').then(res => {
+					if (res.code == 0 && res.data) {
+						this.image_url = res.data.avatar ? res.data.avatar : '../../static/image/logo.png';
+						if (res.data.newUserFlag) {
+							this.newUserFlag = res.data.newUserFlag
+							if (this.newUserFlag == 1) {
+								this.HBShow = true
+							} else {
+								this.HBShow = false
+							}
+						}
+
+					}
+				});
+			},
+			// 分享文案和图片
+			getZiZhi() {
+				httpsRequest.getT('/app/common/type/276').then(res => {
+					if (res.code === 0) {
+						this.tuiguang = res.data.value;
+					}
+				});
+				httpsRequest.getT('/app/common/type/277').then(res => {
+					if (res.code === 0) {
+						this.tuiguangImg = res.data.value;
+					}
+				});
+			},
+			// 查询是否有正在进行的订单
+			gethaveOrders() {
+				httpsRequest.getT('/app/indent/getMyHaveOrder').then(res => {
+					if (res.code == 0 && res.data) {
+						this.haveorder = res.data
+						this.hoveorderShow = true
+					} else {
+						this.haveorder = []
+					}
+				});
+			},
+			gethaveOrder() {
+				httpsRequest.getT('/app/indent/getMyHaveOrder').then(res => {
+					if (res.code == 0 && res.data) {
+						this.haveorder = res.data
+						// console.log('查询订单', this.haveorder && this.haveorder.riderUserId && this.driverShow)
+						if (this.haveorder && this.haveorder.riderUserId && this.driverShow) {
+							uni.navigateTo({
+								url: '/my/order/pay?indentNumber=' + this.haveorder.indentNumber
+							})
+							clearInterval(this.timer)
+							this.openFest()
+						}
+					} else {
+						this.haveorder = []
+					}
+				});
+			},
+			changeAdd(index) {
+				if (this.token) {
+					// this.tabIndex = index
+					uni.navigateTo({
+						url: '/my/address/index?index=' + index
+					})
+					this.hoveorderShow = false
+				} else {
+					uni.navigateTo({
+						url: '/pages/my/register'
+					})
+				}
+
+			},
+			openMap() {
+				let that = this
+				uni.chooseLocation({
+					success: function(res) {
+						console.log('位置名称：' + res.name);
+						console.log('详细地址：' + res.address);
+						console.log('纬度：' + res.latitude);
+						console.log('经度：' + res.longitude);
+						that.latitude = res.latitude
+						that.longitude = res.longitude
+						that.selectCity(that.longitude, that.latitude);
+					}
+				});
+			},
+			selectCity(longitude, latitude) {
+
+				httpsRequest.getT('/app/Login/selectCity?lat=' + latitude + '&lng=' + longitude).then(res => {
+					if (res.code === 0) {
+						this.city = res.data.city
+						uni.setStorageSync('city', res.data.city)
+						this.covers = [{
+							id: 1,
+							latitude: latitude,
+							longitude: longitude,
+							iconPath: '../../static/image/qi.png',
+							width: 32,
+							height: 44,
+							callout: { //自定义标记点上方的气泡窗口 点击有效
+								content: res.data.address, //文本
+								color: '#FFFFFF', //文字颜色
+								fontSize: 10, //文本大小
+								padding: 10, //附近留白
+								borderRadius: 36, //边框圆角
+								bgColor: '#03A859', //背景颜色
+								display: 'ALWAYS', //常显
+							},
+						}]
+						let data = {
+							address: res.data.address,
+							lng: longitude, //地址经度
+							lat: latitude, //地址维度
+							addressId: '',
+							addressDefault: '',
+							province: res.data.province,
+							city: res.data.city,
+							county: res.data.district,
+						}
+						this.addlist = data
+					}
+				});
+			},
+			// 查询附近司机
+			getAdd(lng, lat) {
+				httpsRequest.getT('/app/indent/findVicinityRider?lng=' + lng + '&lat=' + lat).then(res => {
+					if (res.code == 0) {
+						this.riderNumber = res.data.count
+					}
+				});
+			},
+			//获取出发地
+			getcfd() {
+				httpsRequest.getT('/app/address/getAddressInfo?addressId=' + this.addressId).then(res => {
+					if (res.code == 0 && res.data) {
+						this.addlist = res.data
+						this.getAdd(res.data.lng, res.data.lat)
+						uni.removeStorageSync('addressId')
+						// uni.getStorageSync('addressId')
+					} else {
+						this.addlist = []
+					}
+				});
+			},
+			//获取目的地
+			getzd() {
+				httpsRequest.getT('/app/address/getAddressInfo?addressId=' + this.addressIds).then(res => {
+					if (res.code == 0 && res.data) {
+						// console.log(res.data,'================')
+						this.addlists = res.data
+						this.to.latitude = res.data.lat
+						this.to.longitude = res.data.lng
+
+						this.covers = [{
+							id: 1,
+							latitude: this.addlist.lat,
+							longitude: this.addlist.lng,
+							iconPath: '../../static/image/qi.png',
+							width: 32,
+							height: 44,
+							callout: { //自定义标记点上方的气泡窗口 点击有效
+								content: this.addlist.address, //文本
+								color: '#FFFFFF', //文字颜色
+								fontSize: 10, //文本大小
+								padding: 10, //附近留白
+								borderRadius: 36, //边框圆角
+								bgColor: '#03A859', //背景颜色
+								display: 'ALWAYS', //常显
+							},
+						}, {
+							id: 2,
+							latitude: res.data.lat,
+							longitude: res.data.lng,
+							iconPath: '../../static/image/zd.png',
+							width: 32,
+							height: 44,
+							callout: { //自定义标记点上方的气泡窗口 点击有效
+								content: res.data.address, //文本
+								color: '#03A859', //文字颜色
+								fontSize: 10, //文本大小
+								padding: 10, //附近留白
+								borderRadius: 36, //边框圆角
+								bgColor: '#FFFFFF', //背景颜色
+								display: 'ALWAYS', //常显
+							},
+						}]
+						uni.removeStorageSync('addressIds')
+
+						this.orderPay()
+
+					} else {
+						this.addlists = []
+					}
+				});
+			},
+			// 计算基础价格
+			orderPay() {
+
+				let data = {
+					goLng: this.addlist.lng,
+					goLat: this.addlist.lat,
+					toLng: this.addlists.lng,
+					toLat: this.addlists.lat,
+					redPacketId: '',
+				}
+				httpsRequest.getT('/app/indent/basicsMoney', data).then(res => {
+					if (res.code == 0 && res.data) {
+						console.log(res.data)
+						this.basicPrice = res.data
+						this.polylines = res.data.polyline
+						this.gethaveOrder()
+						this.popupshow = false
+						this.ordershow = true
+						this.routePlanning()
+						this.getyouhui() //获取优惠劵
+
+					}
+				});
+			},
+			//下单
+			payorder() {
+				if (!this.showAgree) {
+					uni.showToast({
+						title: '请同意打车服务协议',
+						icon: 'none'
+					})
+					return
+				}
+
+				let data = {
+					indentType: 1,
+					shipAddress: this.addlist.address,
+					shipAddressLongitude: this.addlist.lng,
+					shipAddressLatitude: this.addlist.lat,
+					deliveryAddress: this.addlists.address,
+					deliveryAddressLongitude: this.addlists.lng,
+					deliveryAddressLatitude: this.addlists.lat,
+
+					shipProvince: this.addlist.province, //出发-省
+					shipCity: this.addlist.city, //出发-市
+					shipDistrict: this.addlist.county, //出发-区
+					deliveryProvince: this.addlists.province, //目的-省
+					deliveryCity: this.addlists.city, //目的-市
+					deliveryDistrict: this.addlists.county, //目的-区
+
+					remarks: '',
+					couponId: this.couponId,
+					itemCodeFlag: 1,
+					// payUser: this.payUser,
+					type: '',
+					remarks: this.remarks
+				}
+				httpsRequest.postJson('/app/indent/addIndent', data).then(res => {
+					if (res.code == 0) {
+						this.indentId = res.data.indentId
+						// this.showpay = true
+						this.$refs.showpay.open('bottom')
+						// this.ordershow = false
+						// this.driverShow = true
+						// this.isShowAgree = false
+						// this.gethaveOrder()
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none',
+							duration: 1500
+						})
+					}
+				});
+			},
+			// 取消订单
+			bindorderOff() {
+				let data = {
+					indentNumber: this.haveorder.indentNumber
+				}
+				httpsRequest.postT('/app/indent/userCancelIndent', data).then(res => {
+					if (res.code == 0) {
+						uni.showToast({
+							title: '订单取消成功'
+						});
+						// this.qxshow = false
+						// this.driverShow = false
+						this.$refs.qxshow.close()
+						this.$refs.driverShow.close()
+						this.openFest()
+					} else {
+						uni.hideLoading();
+						uni.showModal({
+							showCancel: false,
+							title: '订单失败',
+							content: res.msg
+						});
+					}
+				});
+			},
+			getyouhui() { //获取优惠劵
+				// let indentType = this.classifyLsit[this.current].id
+				let data = {
+					indentType: 1,
+					indentMoney: this.basicPrice.allMoney
+				}
+				// console.log( this.basicPrice.allMoney,'---------')
+				httpsRequest.getT('/app/couponUser/getMyOrderCouponList', data).then(res => {
+					if (res.code === 0) {
+						this.youhuiList = res.data.records
+						// console.log(res.data,'---------')
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: "none"
+						})
+					}
+				});
+			},
+			// 步行路线规划
+			routePlanning() {
+				let that = this
+				that.qqmapsdk.direction({
+					mode: 'driving', // 驾车
+					from: { // 起始位置(当前位置)坐标
+						latitude: that.latitude,
+						longitude: that.longitude
+					},
+					to: that.to, // 目的地位置坐标
+					success(res) {
+						// console.log(res, '=======')
+						var coors = JSON.parse(that.polylines)
+						// console.log(coors,'11111111111111')
+						// var coors = res.result.routes[0].polyline
+						// console.log(coors2,'11111111111111')
+						var pl = [] // 点串数组
+						// 坐标解压(返回的点串坐标，通过前向差分进行压缩)
+						var kr = 1000000
+						for (var i = 2; i < coors.length; i++) {
+							coors[i] = Number(coors[i - 2]) + Number(coors[i]) / kr
+						}
+						// 将解压后的坐标放入点串数组pl中
+						for (var i = 0; i < coors.length; i += 2) {
+							pl.push({
+								latitude: coors[i],
+								longitude: coors[i + 1]
+							})
+						}
+						// 设置polyline属性，将路线显示出来，将解压坐标第一个数据作为起点
+						that.polyline = [{
+							points: pl,
+							color: '#03A859',
+							width: 4
+						}]
+					}
+				})
+			},
+			goWeb(url) {
+				if (this.token) {
+					if (url.indexOf('/pages/') !== -1 || url.indexOf('/pageA/') !== -1 || url.indexOf('/my/') !== -1) {
+						uni.navigateTo({
+							url
+						});
+					} else {
+						//#ifndef H5
+						uni.navigateTo({
+							url: '/pages/index/webView?url=' + url
+						});
+						//#endif
+						//#ifdef H5
+						window.location.href = url;
+						//#endif
+					}
+				} else {
+					uni.navigateTo({
+						url: '/pages/my/register'
+					})
+				}
+			},
+			selectWay(id) {
+				this.openWay = id
+			},
+			pay() {
+				if (this.openWay == 0) {
+					this.$queue.showToast('请选择支付方式!')
+					return;
+				}
+				if (this.openWay == 1) {
+					console.log('微信')
+					// #ifdef APP-PLUS
+					// 微信APP支付 根据订单id获取支付信息
+					let data = {
+						indentId: this.indentId
+					}
+					httpsRequest.postT("/app/wxPay/payAppOrder", data).then(res => {
+						// console.log(JSON.stringify(res), '微信支付信息')
+						this.isCheckPay(res.code, 'wxpay', JSON.stringify(res.data));
+					});
+					// #endif
+					// #ifdef MP-WEIXIN
+					let that = this
+					let data = {
+						indentId: that.indentId
+					}
+					httpsRequest.postT("/app/wxPay/wxPayJsApiOrder", data).then(res => {
+						if (res.code == 0) {
+							that.couponId = ''
+							that.couponName = ''
+							that.$refs.showpay.close('bottom')
+							uni.requestPayment({
+								provider: 'wxpay',
+								timeStamp: res.data.timestamp,
+								nonceStr: res.data.noncestr,
+								package: res.data.package,
+								signType: res.data.signType,
+								paySign: res.data.sign,
+								success: function(res) {
+									console.log(res)
+									uni.hideLoading();
+									uni.showToast({
+										title: '订单支付成功',
+										icon: 'none'
+									});
+									that.ordershow = false
+									that.driverShow = true
+									that.isShowAgree = false
+									that.gethaveOrder()
+								},
+								fail: function(err) {
+									console.log('fail:' + JSON.stringify(err));
+									uni.hideLoading();
+									that.$queue.showToast('支付失败');
+								}
+							});
+						} else {
+							uni.showToast({
+								title: res.msg,
+								icon: 'none'
+							})
+						}
+					});
+					// #endif
+
+					// #ifdef H5
+					// 微信h5支付 根据订单id获取支付信息
+					let ua = navigator.userAgent.toLowerCase();
+					if (ua.indexOf('micromessenger') !== -1) { //微信里打开
+						let data = {
+							indentId: this.indentId
+						}
+						httpsRequest.postT('/app/wxPay/wxPayMpOrder', data).then(res => {
+							if (res.code == 0) {
+								this.couponId = ''
+								this.couponName = ''
+								this.$refs.showpay.close('bottom')
+								this.callPay(res.data);
+							} else {
+								uni.showToast({
+									icon: 'none',
+									title: '支付失败!'
+								});
+							}
+						});
+					}
+					// #endif
+				} else if (this.openWay == 2) {
+					// APP支付宝支付
+					// #ifdef H5
+					// this.form.payType = 5
+					let data = {
+						indentId: this.indentId
+					}
+					httpsRequest.postT('/app/aliPay/payH5Order', data).then(
+						res => {
+							if (res.code == 0) {
+								this.couponId = ''
+								this.couponName = ''
+								this.$refs.showpay.close('bottom')
+								const div = document.createElement('div')
+								div.innerHTML = res.data //此处form就是后台返回接收到的数据
+								document.body.appendChild(div)
+								document.forms[0].submit()
+							} else {
+								uni.showToast({
+									icon: 'none',
+									title: '支付失败!'
+								});
+							}
+						});
+					// #endif
+
+					// #ifdef APP
+					// this.form.payType = 4
+					let data = {
+						indentId: this.indentId
+					}
+					httpsRequest.postT("/app/aliPay/payAppOrder", data).then(res => {
+						this.couponId = ''
+						this.couponName = ''
+						this.$refs.showpay.close('bottom')
+						this.isCheckPay(res.code, 'alipay', res.data)
+					});
+					// #endif
+				} else if (this.openWay == 3) {
+					this.showpay = false
+					uni.showModal({
+						title: '温馨提示',
+						content: '确定使用余额支付？',
+						showCancel: true,
+						cancelText: '取消',
+						confirmText: '确认',
+						success: res => {
+							if (res.confirm) {
+								uni.showLoading({
+									title: '支付中...'
+								})
+								httpsRequest.postT('/app/userMoney/moneyPayIndent?indentId=' + this.indentId)
+									.then(res => {
+										if (res.code == 0) {
+											this.couponId = ''
+											this.couponName = ''
+											this.$refs.showpay.close('bottom')
+											uni.showToast({
+												title: '订单支付成功'
+											});
+											this.ordershow = false
+											this.driverShow = true
+											this.isShowAgree = false
+											this.gethaveOrder()
+
+										} else {
+											uni.hideLoading();
+											uni.showModal({
+												showCancel: false,
+												title: '提示',
+												content: res.msg
+											});
+										}
+									});
+							}
+						}
+					});
+
+				}
+			},
+			callPay: function(response) {
+				if (typeof WeixinJSBridge === "undefined") {
+					if (document.addEventListener) {
+						document.addEventListener('WeixinJSBridgeReady', this.onBridgeReady(response), false);
+					} else if (document.attachEvent) {
+						document.attachEvent('WeixinJSBridgeReady', this.onBridgeReady(response));
+						document.attachEvent('onWeixinJSBridgeReady', this.onBridgeReady(response));
+					}
+				} else {
+					this.onBridgeReady(response);
+				}
+			},
+			onBridgeReady: function(response) {
+				let that = this;
+				// if (!response.package) {
+				// 	return;
+				// }
+				console.log(response, 111111)
+				WeixinJSBridge.invoke(
+					'getBrandWCPayRequest', {
+						"appId": response.appid, //公众号名称，由商户传入
+						"timeStamp": response.timestamp, //时间戳，自1970年以来的秒数
+						"nonceStr": response.noncestr, //随机串
+						"package": response.package,
+						"signType": response.signType, //微信签名方式：
+						"paySign": response.sign //微信签名
+					},
+					function(res) {
+						console.log(res, '/*-/*-/*-')
+						if (res.err_msg === "get_brand_wcpay_request:ok") {
+							// 使用以上方式判断前端返回,微信团队郑重提示：
+							//res.err_msg将在用户支付成功后返回ok，但并不保证它绝对可靠。
+							uni.showLoading({
+								title: '支付成功'
+							});
+							that.ordershow = false
+							that.driverShow = true
+							that.isShowAgree = false
+							that.gethaveOrder()
+						} else {
+							uni.hideLoading();
+						}
+						WeixinJSBridge.log(response.err_msg);
+					}
+				);
+			},
+			isCheckPay(status, name, order) {
+				if (status == 0) {
+					this.setPayment(name, order);
+				} else {
+					uni.hideLoading();
+					uni.showToast({
+						title: '支付信息有误',
+						icon: 'none'
+					});
+				}
+			},
+			setPayment(name, order) {
+				let that = this;
+				console.log(name, '*-*-*', order)
+				uni.requestPayment({
+					provider: name,
+					orderInfo: order, //微信、支付宝订单数据
+					success: function(res) {
+						console.log(res)
+						uni.hideLoading();
+						uni.showLoading({
+							title: '支付成功'
+						});
+						that.ordershow = false
+						that.driverShow = true
+						that.isShowAgree = false
+						that.gethaveOrder()
+						// setTimeout(function() {
+						// 	uni.navigateBack()
+						// }, 1000);
+					},
+					fail: function(err) {
+						console.log(err)
+						uni.hideLoading();
+					},
+					complete() {
+						uni.hideLoading();
+					}
+				});
+			},
+		}
+	}
+</script>
+
+<style>
+	.index {
+		width: 750rpx;
+		flex: 1;
+		background-color: #FFFFFF;
+	}
+
+	.header {
+		width: 750rpx;
+		height: 180rpx;
+		position: fixed;
+		top: 0rpx;
+		left: 0;
+		right: 0;
+		z-index: 9;
+	}
+
+	.header-content {
+		/* width: 750rpx; */
+		/* height: 100rpx; */
+		margin-top: 80rpx;
+		/* background-color:red; */
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+
+
+
+	}
+
+	.bb {
+		background: #FFFFFF;
+		width: 120px;
+		border-radius: 50px;
+		margin-left: 10px;
+		height: 80rpx;
+	}
+
+	.header-avatar {
+		width: 60rpx;
+		height: 60rpx;
+		border-radius: 50%;
+		margin-left: 24rpx;
+	}
+
+	.header-title {
+		margin-left: 20rpx;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.maps {
+		width: 750rpx;
+		flex: 1;
+		/* background-color: red; */
+	}
+
+	.maps {
+		width: 750rpx;
+		/* height: 800rpx; */
+		flex: 1;
+	}
+
+	.orderb {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-direction: row;
+		background: #f2f6f9;
+		margin: 0rpx 30rpx 0 30rpx;
+		border-radius: 24rpx;
+		padding: 0 30rpx;
+		height: 90rpx;
+	}
+
+	.bottomcont {
+		width: 750rpx;
+
+		border-radius: 24rpx 24rpx 0 0;
+		background-color: #FFFFFF;
+
+	}
+
+	.addbox {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-direction: row;
+		margin: 20rpx 30rpx 30rpx 30rpx;
+		padding: 0 30rpx;
+		height: 110rpx;
+		border-radius: 16rpx;
+	}
+
+	.add_cont {
+		display: flex;
+		align-items: center;
+		flex-direction: row;
+	}
+
+	.add_tit {
+		width: 470rpx;
+		font-size: 34rpx;
+		font-family: PingFang SC;
+		font-weight: bold;
+		color: #333333;
+	}
+
+	.bg {
+		background: #F2FFF9;
+		border: 1rpx solid #03A859;
+		border-radius: 16rpx;
+	}
+
+	.bgs {
+		background: #F5F8FF;
+
+	}
+
+	.green {
+		width: 16rpx;
+		height: 16rpx;
+		background: #1FC657;
+		border-radius: 50%;
+		margin-right: 20rpx;
+	}
+
+	.orgin {
+		width: 16rpx;
+		height: 16rpx;
+		background: #FBAC04;
+		border-radius: 50%;
+		margin-right: 20rpx;
+	}
+
+	.banre {
+		/* margin-lr flex align-center justify-between padding-bottom */
+		display: flex;
+		align-items: center;
+		flex-direction: row;
+		justify-content: space-between;
+		padding-bottom: 30rpx;
+		margin: 0 30rpx;
+	}
+
+	/* 中间第二个弹框 */
+	.bottomconts {
+		width: 750rpx;
+
+		border-radius: 24rpx 24rpx 0 0;
+		background-color: #FFFFFF;
+	}
+
+	.controls-box {
+		background: #FFFFFF;
+		border-radius: 32upx 32upx 0 0;
+		padding: 30rpx;
+	}
+
+	.btn {
+		width: 686rpx;
+		height: 98rpx;
+		/* margin: 0 auto; */
+		margin: 30rpx 30rpx 0rpx 30rpx;
+		background: #03A859;
+		border-radius: 16rpx;
+		font-size: 32rpx;
+		font-family: PingFang SC;
+		font-weight: bold;
+		/* color: #FFFFFF; */
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-direction: row;
+	}
+
+	.remkbtn {
+		width: 686rpx;
+		height: 80rpx;
+		background: #03A859;
+		border-radius: 40rpx;
+		font-size: 28rpx;
+		font-family: PingFang SC;
+		font-weight: bold;
+		color: #FFFFFF !important;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		line-height: 80rpx;
+		margin-top: 40rpx;
+	}
+
+	.mingxi {
+		width: 600rpx;
+		/* height: 600rpx; */
+		background: #fff;
+		border-radius: 60rpx;
+		padding-bottom: 40rpx;
+	}
+
+	/* 第三个弹框 */
+	.bottomcontbs {
+		width: 750rpx;
+		border-radius: 24rpx 24rpx 0 0;
+		background-color: #FFFFFF;
+
+	}
+
+	.qxdj {
+		width: 180rpx;
+		height: 70rpx;
+		border: 2rpx solid #CCCCCC;
+		border-radius: 16rpx;
+		font-size: 28rpx;
+		font-family: PingFang SC;
+		font-weight: bold;
+		color: #666666;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.btns {
+		width: 220rpx;
+		height: 80rpx;
+		border: 2rpx solid #999999;
+		border-radius: 40rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-direction: row;
+	}
+
+	.btnss {
+		width: 220rpx;
+		height: 80rpx;
+		background: #03A859;
+		border-radius: 40rpx;
+		margin-left: 40rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-direction: row;
+	}
+
+	/* //优惠劵 */
+	.scroll-Y {
+		height: 580rpx;
+	}
+
+	.money_box {
+		/* // height: 300rpx;
+		// line-height: 300rpx;
+		// text-align: center;
+		// font-size: 36rpx; */
+		width: 686rpx;
+		/* margin: 0 auto; */
+		background: #ffffff;
+		border-radius: 14upx;
+		height: 220rpx;
+		margin-bottom: 20upx;
+		margin-top: 20rpx;
+		border-radius: 24rpx;
+		padding: 20rpx;
+	}
+
+	.box_tit {
+		width: 350px;
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.money_name {
+		font-size: 27rpx;
+		font-weight: bold;
+
+	}
+
+	.money_price {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		flex-direction: row;
+		font-size: 48upx;
+		font-weight: bold;
+		padding-right: 20rpx;
+	}
+
+
+	.money_line {
+		background: #E6E6E6;
+		height: 1rpx;
+		width: 646rpx;
+		margin: 20rpx 0;
+	}
+
+	.box_bottom {
+		width: 350px;
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		/* margin-right: 25rpx; */
+		padding-right: 20rpx;
+	}
+
+	.money_use {
+		color: #999999;
+		font-size: 24rpx;
+		/* display: flex;
+		justify-content: left;
+		align-items: center; */
+	}
+
+	.lj_use {
+		/* width: 150rpx; */
+		border: 2rpx solid #FF130A;
+		padding: 5rpx 20rpx;
+		line-height: 48rpx;
+		border-radius: 40rpx;
+		font-size: 23rpx;
+	}
+
+	.deteJuan {
+
+		border: 2rpx solid #FF130A;
+		text-align: center;
+		line-height: 48rpx;
+		border-radius: 40rpx;
+		font-size: 23rpx;
+		margin: 20rpx 0;
+		padding: 4rpx 15rpx;
+	}
+
+	/* 支付弹框 */
+	.popup_pay {
+		/* width: 686rpx; */
+	}
+
+	.pay_btns {
+		/* 	width: 90%;
+		margin: 0 auto 40rpx; */
+		text-align: center;
+		background: #06C484;
+		height: 80rpx;
+		border-radius: 16rpx;
+
+		line-height: 80rpx;
+		/* margin-top: 20rpx; */
+		margin: 20rpx 30rpx;
+		display: flex;
+		flex-flow: row;
+		align-items: center;
+		justify-content: center;
+	}
+</style>
